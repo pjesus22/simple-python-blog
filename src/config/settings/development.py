@@ -11,6 +11,11 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# DATABASE CONFIGURATION
+DATABASES["default"]["NAME"] = Path(
+    os.getenv("DATABASE_PATH", str(BASE_DIR / "db.sqlite3"))
+)
+
 # LOGGING
 LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG").upper()
 LOGGING["root"]["level"] = LOG_LEVEL

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from config.logging import JsonFormatter
 
@@ -8,6 +9,11 @@ from .base import *
 SECRET_KEY = os.environ["SECRET_KEY"]
 DEBUG = False
 ALLOWED_HOSTS = os.environ["ALLOWED_HOSTS"].split(",")
+
+# DATABASE CONFIGURATION
+DATABASES["default"]["NAME"] = Path(
+    os.getenv("DATABASE_PATH", str(BASE_DIR / "db.sqlite3"))
+)
 
 # LOGGING
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
