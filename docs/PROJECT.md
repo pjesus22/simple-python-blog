@@ -1,0 +1,349 @@
+# Project Specification
+
+## 1. Context
+
+I am currently unaware of the full capabilities and limits of the core Django
+framework for REST web development without the use of third-party dependencies
+such as `djangorestframework`, `djangorestframework-simplejwt`, or
+`drf-spectacular`.
+
+This may create some of the following challenges:
+
+- Excessive reliance on third parties for standard REST patterns.
+- Repetitive code (boilerplate) or overly complex logic when using plain Django
+  to create clean APIs.
+
+This project will serve as an exploratory test to define the capabilities and
+limits of a "vanilla" development environment.
+
+## 2. Goal
+
+Develop a basic REST API for a personal blog that allows managing and grouping
+posts.
+
+## 3. Users
+
+The system features two access levels:
+
+### Administrator (Blog Owner)
+
+User responsible for managing the site's content.
+
+- Creates, reads, updates, and deletes blog posts.
+- Creates and organizes categories.
+- Views drafts and published posts.
+
+### Anonymous Reader (Public)
+
+External visitors consuming the blog API.
+
+- List and read published posts.
+- Filter posts by category.
+
+## 4. Scope
+
+### 4.1 In Scope (v1)
+
+The initial version will include:
+
+- Post management via CRUD functionality.
+- Post filtering by category.
+- Three lifecycle statuses for posts: Draft, Published, and Deleted, allowing
+  transitions between any of these states.
+- Soft deletion mechanism. Post will be marked with a "deleted" status, but they
+  will remain in the system for recovery and periodically removed via batches.
+
+### 4.2 Out of Scope (v1)
+
+- Public user registration.
+- Third-party user management or multi-author roles.
+- Comment or interaction systems for readers.
+- Automated external social media publishing or RSS feeds.
+
+## 5. Functional Requirements
+
+### 5.1 Authentication and Access Control
+
+- FR-001: The system shall restrict write operations (create, update, and
+  delete) to authenticated administrator users.
+- FR-002: The system shall allow public access (unauthenticated) to read-only
+  endpoints.
+- FR-003: The system shall provide secure login and logout endpoints for the
+  administrator using Django core authentication mechanisms.
+
+### 5.2 Post Management
+
+- FR-004: The system shall allow the administrator to create posts with at least
+  the following fields: title, slug (auto-generated), content, category, and
+  status.
+- FR-005: The system shall allow the administrator to update the mutable fields
+  of an existing post. The slug, publication date, and lifecycle status shall
+  not be modified through the ordinary post update operation.
+- FR-006: The system shall allow explicit lifecycle operations to transition
+  posts among Draft, Published, and Deleted states according to the defined
+  transition rules.
+- FR-007: When a post transitions to Published for the first time, the system
+  shall automatically record its publication date.
+- FR-008: The system shall allow anonymous users to retrieve a paginated list of
+  published posts.
+- FR-009: The system shall allow anonymous users to view the details of a
+  published post using its slug or ID.
+- FR-010: The system shall prevent anonymous users from viewing posts with Draft
+  or Deleted status.
+
+### 5.3 Category Management
+
+- FR-011: The system shall allow the administrator to create, update, and delete
+  categories.
+- FR-012: The system shall allow anonymous users to list all available
+  categories.
+- FR-013: The system shall allow filtering published posts by category.
+
+### 5.4 Data Lifecycle
+
+- FR-014: When a post is deleted by the administrator, the system shall perform
+  a soft delete by setting the status to "Deleted" instead of removing the
+  record from the database.
+- FR-015: The system shall exclude deleted posts from public API responses.
+- FR-016: The system shall allow the administrator to list, inspect, and restore
+  deleted posts.
+- FR-017: The system shall provide a mechanism to permanently delete posts
+  marked as deleted after a defined retention period.
+
+## 6. Non-functional requirements
+
+### 6.1 Architectural constraints
+
+- NFR-001: Zero External REST Dependencies. Core API logic and JSON
+  serialization must rely on Django's core utilities (e.g., `django.views.View`,
+  `JsonResponse`) without using third-party REST frameworks.
+- NFR-002: Environment and Secret Isolation. Application configuration, database
+  connection strings, and secret keys must be loaded from environment variables
+  and excluded from source control.
+
+### 6.2 Security and authentication
+
+- NFR-003: Secure Access Gates. All non-safe HTTP methods (POST, PUT, PATCH,
+  DELETE) must enforce strict authentication checks and return standard
+  `401 Unauthorized` or `403 Forbidden` JSON payloads when access is denied.
+- NFR-004: Payload Validation. The API must validate incoming request content
+  types (`application/json`) and reject malformed JSON structures before
+  processing domain logic.
+
+### 6.3 Standards and protocol compliance
+
+- NFR-005: RESTful Consistency. Endpoints must strictly adhere to standard HTTP
+  methods and return appropriate HTTP status codes.
+- NFR-006: Unified Response Structure. Error responses must maintain a
+  consistent JSON structure across all endpoints to facilitate debugging and
+  predictable consumption.
+
+### 6.4 Performance and database efficiency
+
+- NFR-007: ORM Query Efficiency. Public-facing and administrator API endpoints
+  shall use efficient Django ORM queries and shall avoid known N+1 query
+  patterns. Related objects shall be loaded explicitly using mechanisms such as
+  `select_related` or `prefetch_related` where appropriate.
+
+### 6.5 Maintainability and testability
+
+- NFR-008: Automated Test Coverage. The codebase must include automated tests
+  covering endpoint status codes, payload serialization, state transitions,
+  access control restrictions and unexpected query growth for representative API
+  operations.
+
+## 7. Constraints
+
+The following constraints apply to the v1 implementation:
+
+- The application shall use Django as the core web framework.
+- The API shall be implemented using Django's built-in HTTP and JSON
+  capabilities without Django REST Framework or other third-party REST
+  frameworks.
+- Authentication shall use Django's built-in authentication system.
+- The application shall use Django ORM for database access.
+- The project shall use `uv` for Python dependency and environment management.
+- Third-party dependencies may be introduced only when they provide
+  functionality that is outside the capabilities or intended scope of Django
+  core, and each such dependency must be documented and justified.
+- Application secrets and environment-specific configuration shall not be
+  committed to source control.
+- The project shall prioritize understanding Django's native capabilities over
+  minimizing implementation effort.
+
+## 8. Assumptions
+
+The following assumptions are made for the v1 project:
+
+- The system is intended primarily as an educational and exploratory project,
+  rather than a production-ready public blogging platform.
+- There will initially be a single administrator responsible for managing blog
+  content.
+- Anonymous readers do not require accounts or authentication.
+- Posts belong to a single category in v1.
+- A post has exactly one current lifecycle status at any given time.
+- Deleted posts remain recoverable until they are permanently removed by the
+  retention mechanism.
+- Permanent deletion is an administrative or maintenance operation and is not
+  exposed as a normal public API operation.
+- The application will initially use a relational database supported by Django
+  ORM.
+- No external identity provider, payment provider, social network, or other
+  third-party service is required for the core functionality.
+- The API is the primary interface to the application; a separate frontend is
+  not part of v1.
+- The API does not need to provide backwards compatibility guarantees for future
+  versions during the exploratory phase.
+
+## 9. Acceptance Criteria
+
+The v1 project will be considered complete when all of the following conditions
+are satisfied:
+
+### API and access control
+
+- Anonymous clients can retrieve published posts without authentication.
+- Anonymous clients cannot create, update, or delete posts or categories.
+- Authenticated administrator users can perform the operations defined within
+  the scope.
+- Login and logout are implemented using Django's core authentication
+  mechanisms.
+- Unauthorized access attempts return appropriate HTTP status codes and
+  consistent JSON error responses.
+
+### Post management
+
+- An administrator can create a post with the required fields.
+- A post receives a generated slug.
+- An administrator can update the mutable fields of an existing post.
+- An administrator can transition a post between Draft, Published, and Deleted
+  states through the defined lifecycle operations.
+- Public endpoints return only Published posts.
+- Public clients cannot retrieve Draft or Deleted posts.
+- Administrators can inspect and restore Deleted posts.
+- Deleted posts can eventually be permanently removed according to the defined
+  retention mechanism.
+
+### Categories
+
+- An administrator can create, update, and delete categories.
+- Anonymous clients can retrieve available categories.
+- Published posts can be filtered by category.
+
+### API quality
+
+- Endpoints use appropriate HTTP methods and status codes.
+- Request payloads are validated before domain logic is executed.
+- JSON responses follow the documented response structure.
+- Public list endpoints support pagination.
+- Automated tests cover authentication, authorization, validation,
+  serialization, lifecycle transitions, filtering, and public/private visibility
+  rules.
+
+### Project constraints
+
+- The application can be installed and executed using the documented `uv`
+  workflow.
+- The application can be configured without committing secrets to the
+  repository.
+- No third-party REST framework is required to run the API.
+
+## 10. Deliverables
+
+The v1 project shall produce the following deliverables:
+
+- Django application containing the REST API implementation.
+- Database models and migrations for posts, categories, and required
+  authentication-related data.
+- Authentication and authorization mechanisms based on Django core.
+- Public and administrator API endpoints defined by the functional requirements.
+- Automated test suite covering the required functional and non-functional
+  behavior.
+- API documentation describing:
+  - Available endpoints.
+  - HTTP methods.
+  - Request payloads.
+  - Response payloads.
+  - Authentication requirements.
+  - HTTP status codes.
+  - Error response format.
+
+- `README.md` containing setup, configuration, development, and execution
+  instructions.
+- `docs/PROJECT.md` containing the project scope and requirements.
+- ADRs documenting significant architectural or technical decisions made during
+  development.
+
+## 11. Phases
+
+#### Phase 1 - Project foundation
+
+- Initialize the project with `uv`.
+- Configure Django.
+- Configure environment-specific settings.
+- Configure the database.
+- Create the initial Django application structure.
+- Establish the testing setup.
+- Define the initial data models.
+
+#### Phase 2 - Core domain
+
+- Implement the Post model.
+- Implement the Category model.
+- Implement post lifecycle states.
+- Implement slug generation.
+- Implement database migrations.
+- Add model-level validation and tests.
+
+#### Phase 3 - Authentication and authorization
+
+- Configure Django authentication.
+- Implement administrator login.
+- Implement logout.
+- Implement authentication checks for protected operations.
+- Implement and test unauthorized access responses.
+
+#### Phase 4 - REST API
+
+- Implement JSON request parsing and validation.
+- Implement post CRUD operations.
+- Implement category management.
+- Implement public post listing.
+- Implement post detail endpoints.
+- Implement category filtering.
+- Implement pagination.
+- Implement consistent error responses.
+
+#### Phase 5 - Post lifecycle and retention
+
+- Implement explicit post state transitions.
+- Implement soft deletion.
+- Implement deleted-post inspection and restoration.
+- Implement permanent deletion after the retention period.
+- Add automated tests for all lifecycle transitions.
+
+#### Phase 6 - Hardening and documentation
+
+- Review API behavior and HTTP status codes.
+- Review authentication and authorization.
+- Review ORM queries for inefficient access patterns.
+- Add or improve automated tests.
+- Document the API.
+- Update the README.
+- Review and finalize ADRs.
+- Verify that the project satisfies the acceptance criteria.
+
+## 12. Risks
+
+| Risk                                                                                       | Impact | Mitigation                                                                                                                                                          |
+| ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Django core may provide less REST-oriented functionality than expected                     | High   | Investigate Django's built-in capabilities before introducing third-party dependencies and document relevant findings.                                              |
+| Manual API implementation may introduce repetitive or inconsistent code                    | Medium | Establish shared utilities and response conventions where appropriate, while keeping the implementation explicit enough to serve the project's exploratory purpose. |
+| Authentication implementation may contain security mistakes                                | High   | Prefer Django's built-in authentication mechanisms and create tests for authentication and authorization boundaries.                                                |
+| Inconsistent HTTP status codes or error responses may make the API difficult to consume    | Medium | Define and test a unified response and error format early in the API implementation.                                                                                |
+| ORM queries may introduce N+1 query patterns                                               | Medium | Inspect generated queries and use appropriate ORM optimization techniques such as `select_related` and `prefetch_related`.                                          |
+| Soft-deleted posts may accidentally become visible through public endpoints                | High   | Centralize or consistently enforce status filtering and add tests ensuring Draft and Deleted posts are excluded from public responses.                              |
+| Lifecycle transitions may produce invalid state combinations                               | High   | Define allowed transitions explicitly and test every valid and invalid transition.                                                                                  |
+| The project may grow beyond its exploratory purpose                                        | Medium | Treat the scope defined in this document as the v1 boundary and record significant additions as explicit scope changes.                                             |
+| Third-party dependencies may be introduced without evaluating Django's native capabilities | Medium | Require significant dependencies to be justified and documented, preferably through an ADR when they affect architecture or core project constraints.               |
+| The permanent deletion mechanism may remove content unexpectedly                           | High   | Use an explicit retention policy, restrict permanent deletion to maintenance/admin operations, and test the deletion criteria before enabling automated cleanup.    |
