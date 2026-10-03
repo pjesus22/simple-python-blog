@@ -1,0 +1,58 @@
+[project]
+name = "simple-python-blog"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = ["django>=6.1.1"]
+
+[dependency-groups]
+dev = [
+  "basedpyright>=1.40.1",
+  "pre-commit>=4.6.2",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "pytest-django>=4.14.0",
+  "ruff>=0.16.10",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/config"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+pythonpath = ["src"]
+testpaths = ["tests", "src"]
+addopts = "-ra --tb=short --strict-markers"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+  "*/migrations/*",
+  "*/manage.py",
+  "*/wsgi.py",
+  "*/asgi.py",
+  "*/config/settings/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 80
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP", "DJ", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+"src/config/settings/*" = ["F403", "F405"]
+
+[tool.basedpyright]
+include = ["src", "tests"]
+typeCheckingMode = "standard"
+reportMissingTypeStubs = false
