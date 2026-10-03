@@ -6,6 +6,9 @@ from .base import *
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-test-only")
 DEBUG = False
 
+# SECURITY OPTIMIZATIONS (FOR SPEED)
+AUTH_PASSWORD_VALIDATORS = []
+
 # LOGGING
 LOGGING["root"]["level"] = "WARNING"
 LOGGING["loggers"]["django"]["level"] = "WARNING"
