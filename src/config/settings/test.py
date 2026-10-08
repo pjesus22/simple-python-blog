@@ -8,6 +8,7 @@ DEBUG = False
 
 # SECURITY OPTIMIZATIONS (FOR SPEED)
 AUTH_PASSWORD_VALIDATORS = []
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # LOGGING
 LOGGING["root"]["level"] = "WARNING"
