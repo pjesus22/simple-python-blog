@@ -11,6 +11,11 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# APPS
+INSTALLED_APPS += [
+    "django_extensions",
+]
+
 # DATABASE CONFIGURATION
 DATABASES["default"]["NAME"] = Path(
     os.getenv("DATABASE_PATH", str(BASE_DIR / "db.sqlite3"))
