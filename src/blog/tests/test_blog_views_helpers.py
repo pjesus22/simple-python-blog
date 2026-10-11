@@ -3,11 +3,15 @@ from types import SimpleNamespace
 
 from blog.views.helpers import (
     _response,
+    collection,
     invalid_credentials,
     invalid_request,
     missing_credentials,
+    not_found,
     parse_json,
+    resource,
     unauthenticated,
+    validation_error,
 )
 
 
@@ -59,6 +63,37 @@ class ResponseHelpersTests:
     def test_response_without_fields_omits_fields_keys(self):
         resp = _response("code", "msg", 400)
         assert "fields" not in _error(resp)
+
+    def test_validation_error_helper_returns_400(self):
+        resp = validation_error({"title": ["This field is required."]})
+        assert resp.status_code == 400
+        assert _error(resp) == {
+            "code": "validation_error",
+            "message": "One or more fields are invalid.",
+            "fields": {"title": ["This field is required."]},
+        }
+
+    def test_not_found_helper_returns_404(self):
+        resp = not_found()
+        assert resp.status_code == 404
+        assert _error(resp) == {"code": "not_found", "message": "Resource not found."}
+
+    def test_resource_default_status_returns_200(self):
+        resp = resource({"id": 1})
+        assert resp.status_code == 200
+        assert json.loads(resp.content) == {"id": 1}
+
+    def test_resource_custom_status_returns_given_status(self):
+        resp = resource({"id": 1}, status=201)
+        assert resp.status_code == 201
+
+    def test_collection_helper_returns_200_with_items(self):
+        resp = collection([{"id": 1}], {"page": 1, "total": 1})
+        assert resp.status_code == 200
+        assert json.loads(resp.content) == {
+            "items": [{"id": 1}],
+            "pagination": {"page": 1, "total": 1},
+        }
 
 
 class ParseJsonTests:
