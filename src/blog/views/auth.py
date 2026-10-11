@@ -1,3 +1,5 @@
+from functools import wraps
+
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
@@ -36,3 +38,13 @@ class LogoutView(View):
             return unauthenticated()
         logout(request)
         return HttpResponse(status=204)
+
+
+def login_required_json(view):
+    @wraps(view)
+    def wrapper(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return unauthenticated()
+        return view(self, request, *args, **kwargs)
+
+    return wrapper
