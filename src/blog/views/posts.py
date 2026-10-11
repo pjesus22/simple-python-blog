@@ -63,7 +63,7 @@ class PostDetailView(Json404Mixin, View):
         if data is None:
             return invalid_request()
         post = get_object_or_404(Post.objects, slug=slug)
-        form = PostForm(data=data)
+        form = PostForm(data=data, instance=post)
         if not form.is_valid():
             return validation_error(form.errors)
         for field, value in form.cleaned_data.items():
@@ -77,7 +77,7 @@ class PostDetailView(Json404Mixin, View):
         if data is None:
             return invalid_request()
         post = get_object_or_404(Post.objects, slug=slug)
-        form = PostForm(data=data)
+        form = PostForm(data=data, instance=post)
         for name in list(form.fields):
             if name not in data:
                 form.fields.pop(name)
