@@ -17,7 +17,7 @@ def _record(level=logging.INFO, msg="hello", exc_info=None):
     )
 
 
-def test_format_returns_json_with_expected_fields():
+def test_format_info_record_returns_json_fields():
     data = json.loads(JsonFormatter().format(_record()))
 
     assert data["level"] == "INFO"
@@ -26,7 +26,7 @@ def test_format_returns_json_with_expected_fields():
     assert {"timestamp", "module", "line"} <= data.keys()
 
 
-def test_format_includes_exception_when_exc_info_present():
+def test_format_exc_info_present_includes_exception():
     try:
         raise ValueError("boom")
     except ValueError:
@@ -36,6 +36,6 @@ def test_format_includes_exception_when_exc_info_present():
     assert "exception" in data
 
 
-def test_format_omits_exception_when_no_exc_info():
+def test_format_no_exc_info_omits_exception():
     data = json.loads(JsonFormatter().format(_record()))
     assert "exception" not in data
