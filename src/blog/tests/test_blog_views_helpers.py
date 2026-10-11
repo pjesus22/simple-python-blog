@@ -19,8 +19,8 @@ def _error(resp):
     return json.loads(resp.content)["error"]
 
 
-class TestResponseHelpers:
-    def test_invalid_request(self):
+class ResponseHelpersTests:
+    def test_invalid_request_helper_returns_400(self):
         resp = invalid_request()
         assert resp.status_code == 400
         assert _error(resp) == {
@@ -28,7 +28,7 @@ class TestResponseHelpers:
             "message": "The request is invalid.",
         }
 
-    def test_missing_credentials(self):
+    def test_missing_credentials_helper_returns_400(self):
         resp = missing_credentials()
         assert resp.status_code == 400
         assert _error(resp) == {
@@ -36,7 +36,7 @@ class TestResponseHelpers:
             "message": "Username and password are required.",
         }
 
-    def test_invalid_credentials(self):
+    def test_invalid_credentials_helper_returns_400(self):
         resp = invalid_credentials()
         assert resp.status_code == 401
         assert _error(resp) == {
@@ -44,7 +44,7 @@ class TestResponseHelpers:
             "message": "Invalid username or password.",
         }
 
-    def test_unauthenticated(self):
+    def test_unauthenticated_helper_returns_401(self):
         resp = unauthenticated()
         assert resp.status_code == 401
         assert _error(resp) == {
@@ -52,32 +52,32 @@ class TestResponseHelpers:
             "message": "Authentication required.",
         }
 
-    def test_fields_included_when_present(self):
+    def test_response_with_fields_includes_fields_keys(self):
         resp = _response("code", "msg", 400, {"username": "required"})
         assert _error(resp)["fields"] == {"username": "required"}
 
-    def test_fields_ommited_when_absent(self):
+    def test_response_without_fields_omits_fields_keys(self):
         resp = _response("code", "msg", 400)
         assert "fields" not in _error(resp)
 
 
-class TestParseJson:
-    def test_non_json_content_type_returns_none(self):
+class ParseJsonTests:
+    def test_parse_json_non_json_content_type_returns_none(self):
         req = _req("text/plain", b'{"a":1}')
         assert parse_json(req) is None
 
-    def test_valid_json_returns_dict(self):
+    def test_parse_json_valid_body_returns_dict(self):
         req = _req("application/json", b'{"a":1}')
         assert parse_json(req) == {"a": 1}
 
-    def test_empty_body_returns_empty_dict(self):
+    def test_parse_json_empty_body_returns_empty_dict(self):
         req = _req("application/json", b"")
         assert parse_json(req) == {}
 
-    def test_malformed_json_returns_none(self):
+    def test_parse_json_malformed_body_returns_none(self):
         req = _req("application/json", b"{nope")
         assert parse_json(req) is None
 
-    def test_non_utf8_returns_none(self):
+    def test_parse_json_non_utf8_body_returns_none(self):
         req = _req("application/json", b"\xff")
         assert parse_json(req) is None
