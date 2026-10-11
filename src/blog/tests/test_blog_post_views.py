@@ -91,6 +91,15 @@ class PostCreateViewTests:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
 
+    @pytest.mark.parametrize("payload", ["[]", "5", "null", '"x"'])
+    def test_create_non_object_json_returns_400(self, client, user_factory, payload):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"), data=payload, content_type="application/json"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
     def test_create_valid_payload_returns_201(self, client, user_factory):
         client.force_login(user_factory())
         resp = client.post(
@@ -132,6 +141,27 @@ class PostCreateViewTests:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "validation_error"
         assert field in resp.json()["error"]["fields"]
+
+    def test_create_duplicate_title_returns_400(self, client, user_factory, published):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"),
+            data={**self.MOCK_DATA, "title": published.title},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "validation_error"
+        assert "title" in resp.json()["error"]["fields"]
+
+    def test_create_unknown_category_returns_400(self, client, user_factory):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"),
+            data={**self.MOCK_DATA, "category": 99999},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert "category" in resp.json()["error"]["fields"]
 
 
 class PostUpdateViewTests:
@@ -237,3 +267,55 @@ class PostUpdateViewTests:
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "validation_error"
+
+    def test_partial_update_immutable_fields_returns_200(
+        self, client, user_factory, published
+    ):
+        client.force_login(user_factory())
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data={
+                "slug": "hacked-slug",
+                "status": "deleted",
+                "published_at": "2020-01-01T00:00:00Z",
+            },
+            content_type="application/json",
+        )
+        body = resp.json()
+        assert resp.status_code == 200
+        assert body["slug"] == published.slug
+        assert body["status"] == "published"
+
+    def test_partial_update_duplicate_title_of_other_post_returns_400(
+        self, client, user_factory, published, draft
+    ):
+        client.force_login(user_factory())
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data={"title": draft.title},
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert "title" in resp.json()["error"]["fields"]
+
+    def test_partial_update_non_object_json_returns_400(
+        self, client, user_factory, published
+    ):
+        client.force_login(user_factory())
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data="[]",
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
+    def test_update_non_object_json_returns_400(self, client, user_factory, published):
+        client.force_login(user_factory())
+        resp = client.put(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data="[]",
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"

@@ -41,9 +41,10 @@ def parse_json(request) -> dict | None:
     if request.content_type != "application/json":
         return None
     try:
-        return json.loads(request.body or b"{}")
+        data = json.loads(request.body or b"{}")
     except json.JSONDecodeError, UnicodeDecodeError:
         return None
+    return data if isinstance(data, dict) else None
 
 
 def resource(data: dict, status: int = 200) -> JsonResponse:
