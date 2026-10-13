@@ -9,7 +9,7 @@ class Category(BaseModel):
 
     slug_source = "name"
 
-    class Meta:
+    class Meta(BaseModel.Meta):
         verbose_name_plural = "categories"
 
     def __str__(self):
