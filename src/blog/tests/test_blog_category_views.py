@@ -99,6 +99,16 @@ class CategoryCreateViewTests:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
 
+    def test_create_unauthenticated_returns_401(self, client, db):
+        resp = client.post(
+            reverse("category-list"),
+            data={"name": "New Category"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+        assert resp.json()["error"]["code"] == "unauthenticated"
+        assert not Category.objects.exists()
+
 
 class CategoryUpdateViewTests:
     def test_patch_name_keeps_slug_returns_200(
@@ -193,6 +203,18 @@ class CategoryUpdateViewTests:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
 
+    def test_patch_unauthenticated_returns_401(self, client, category_factory, db):
+        category = category_factory()
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": category.slug}),
+            data={"name": "Hacked"},
+            content_type="application/json",
+        )
+        category.refresh_from_db()
+        assert resp.status_code == 401
+        assert resp.json()["error"]["code"] == "unauthenticated"
+        assert category.name == "Test Category 0"
+
 
 class CategoryDeleteViewTests:
     def test_delete_existing_category_returns_204_and_removes_row(
@@ -220,3 +242,10 @@ class CategoryDeleteViewTests:
         resp = client.delete(reverse("category-detail", kwargs={"slug": "nope"}))
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "not_found"
+
+    def test_delete_unauthenticated_returns_401(self, client, category_factory, db):
+        category = category_factory()
+        resp = client.delete(reverse("category-detail", kwargs={"slug": category.slug}))
+        assert resp.status_code == 401
+        assert resp.json()["error"]["code"] == "unauthenticated"
+        assert Category.objects.filter(pk=category.pk).exists()

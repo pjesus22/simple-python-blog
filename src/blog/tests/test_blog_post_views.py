@@ -302,3 +302,12 @@ class PostUpdateViewTests:
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
+
+    def test_partial_update_unauthenticated_returns_401(self, client, published):
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data={"title": "x"},
+            content_type="application/json",
+        )
+        assert resp.status_code == 401
+        assert resp.json()["error"]["code"] == "unauthenticated"
