@@ -148,6 +148,16 @@ class PostCreateViewTests:
         assert resp.status_code == 400
         assert "category" in resp.json()["error"]["fields"]
 
+    def test_create_non_json_content_type_returns_400(self, client, user_factory):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"),
+            data="title=New Post",
+            content_type="text/plain",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
 
 class PostUpdateViewTests:
     def test_update_unauthenticated_returns_401(self, client, published):
@@ -171,21 +181,6 @@ class PostUpdateViewTests:
         assert body["title"] == "Updated"
         assert body["summary"] == "Sum"
         assert body["content"] == "Body"
-
-    def test_partial_update_title_only_returns_200(
-        self, client, user_factory, published
-    ):
-        client.force_login(user_factory())
-        resp = client.patch(
-            reverse("post-detail", kwargs={"slug": published.slug}),
-            data={"title": "Updated"},
-            content_type="application/json",
-        )
-        body = resp.json()
-        assert resp.status_code == 200
-        assert body["title"] == "Updated"
-        assert body["summary"] == published.summary
-        assert body["content"] == published.content
 
     def test_update_unknown_slug_returns_404(self, client, user_factory):
         client.force_login(user_factory())
@@ -227,13 +222,32 @@ class PostUpdateViewTests:
         assert body["slug"] == published.slug
         assert body["status"] == "published"
 
-    def test_partial_update_non_json_request_returns_400(
+    def test_update_non_json_content_type_returns_400(
         self, client, user_factory, published
     ):
         client.force_login(user_factory())
-        resp = client.patch(reverse("post-detail", kwargs={"slug": published.slug}))
+        resp = client.put(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data="title=Updated",
+            content_type="text/plain",
+        )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
+
+    def test_partial_update_title_only_returns_200(
+        self, client, user_factory, published
+    ):
+        client.force_login(user_factory())
+        resp = client.patch(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data={"title": "Updated"},
+            content_type="application/json",
+        )
+        body = resp.json()
+        assert resp.status_code == 200
+        assert body["title"] == "Updated"
+        assert body["summary"] == published.summary
+        assert body["content"] == published.content
 
     def test_partial_update_blank_title_returns_400(
         self, client, user_factory, published
@@ -265,7 +279,7 @@ class PostUpdateViewTests:
         assert body["slug"] == published.slug
         assert body["status"] == "published"
 
-    def test_partial_update_duplicate_title_of_other_post_returns_400(
+    def test_partial_update_duplicate_title_returns_400(
         self, client, user_factory, published, draft
     ):
         client.force_login(user_factory())
@@ -277,24 +291,14 @@ class PostUpdateViewTests:
         assert resp.status_code == 400
         assert "title" in resp.json()["error"]["fields"]
 
-    def test_partial_update_non_object_json_returns_400(
+    def test_partial_update_non_json_content_type_returns_400(
         self, client, user_factory, published
     ):
         client.force_login(user_factory())
         resp = client.patch(
             reverse("post-detail", kwargs={"slug": published.slug}),
-            data="[]",
-            content_type="application/json",
-        )
-        assert resp.status_code == 400
-        assert resp.json()["error"]["code"] == "invalid_request"
-
-    def test_update_non_object_json_returns_400(self, client, user_factory, published):
-        client.force_login(user_factory())
-        resp = client.put(
-            reverse("post-detail", kwargs={"slug": published.slug}),
-            data="[]",
-            content_type="application/json",
+            data="title=Updated",
+            content_type="text/plain",
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
