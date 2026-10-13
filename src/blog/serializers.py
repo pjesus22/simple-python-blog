@@ -11,3 +11,14 @@ def serialize_post(post) -> dict:
         "created_at": post.created_at.isoformat(),
         "updated_at": post.updated_at.isoformat(),
     }
+
+
+def serialize_category(category) -> dict:
+    return {
+        "id": category.id,
+        "slug": category.slug,
+        "name": category.name,
+        "description": category.description,
+        "created_at": category.created_at.isoformat(),
+        "updated_at": category.updated_at.isoformat(),
+    }
