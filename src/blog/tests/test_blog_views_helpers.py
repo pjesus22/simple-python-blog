@@ -1,6 +1,8 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from blog.views.helpers import (
     _response,
     collection,
@@ -116,3 +118,7 @@ class ParseJsonTests:
     def test_parse_json_non_utf8_body_returns_none(self):
         req = _req("application/json", b"\xff")
         assert parse_json(req) is None
+
+    @pytest.mark.parametrize("body", [b"[]", b"5", b"null", b'"x"'])
+    def test_parse_json_non_object_body_returns_none(self, body):
+        assert parse_json(_req("application/json", body)) is None

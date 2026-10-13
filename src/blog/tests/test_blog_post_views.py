@@ -85,21 +85,6 @@ class PostCreateViewTests:
         assert resp.status_code == 401
         assert resp.json()["error"]["code"] == "unauthenticated"
 
-    def test_create_non_json_request_returns_400(self, client, user_factory):
-        client.force_login(user_factory())
-        resp = client.post(reverse("post-list"))
-        assert resp.status_code == 400
-        assert resp.json()["error"]["code"] == "invalid_request"
-
-    @pytest.mark.parametrize("payload", ["[]", "5", "null", '"x"'])
-    def test_create_non_object_json_returns_400(self, client, user_factory, payload):
-        client.force_login(user_factory())
-        resp = client.post(
-            reverse("post-list"), data=payload, content_type="application/json"
-        )
-        assert resp.status_code == 400
-        assert resp.json()["error"]["code"] == "invalid_request"
-
     def test_create_valid_payload_returns_201(self, client, user_factory):
         client.force_login(user_factory())
         resp = client.post(
@@ -211,12 +196,6 @@ class PostUpdateViewTests:
         )
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "not_found"
-
-    def test_update_non_json_request_returns_400(self, client, user_factory, published):
-        client.force_login(user_factory())
-        resp = client.put(reverse("post-detail", kwargs={"slug": published.slug}))
-        assert resp.status_code == 400
-        assert resp.json()["error"]["code"] == "invalid_request"
 
     def test_update_blank_title_returns_400(self, client, user_factory, published):
         client.force_login(user_factory())
