@@ -1,10 +1,10 @@
 import json
 
 from django.core.paginator import Paginator
-from django.http import Http404, JsonResponse
+from django.http import JsonResponse
 
 
-def _response(
+def error_response(
     code: str, message: str, status: int, fields: dict | None = None
 ) -> JsonResponse:
     body: dict = {"error": {"code": code, "message": message}}
@@ -14,27 +14,31 @@ def _response(
 
 
 def invalid_request() -> JsonResponse:
-    return _response("invalid_request", "The request is invalid.", 400)
+    return error_response("invalid_request", "The request is invalid.", 400)
 
 
 def missing_credentials() -> JsonResponse:
-    return _response("missing_credentials", "Username and password are required.", 400)
+    return error_response(
+        "missing_credentials", "Username and password are required.", 400
+    )
 
 
 def invalid_credentials() -> JsonResponse:
-    return _response("invalid_credentials", "Invalid username or password.", 401)
+    return error_response("invalid_credentials", "Invalid username or password.", 401)
 
 
 def unauthenticated() -> JsonResponse:
-    return _response("unauthenticated", "Authentication required.", 401)
+    return error_response("unauthenticated", "Authentication required.", 401)
 
 
 def validation_error(fields: dict) -> JsonResponse:
-    return _response("validation_error", "One or more fields are invalid.", 400, fields)
+    return error_response(
+        "validation_error", "One or more fields are invalid.", 400, fields
+    )
 
 
 def not_found() -> JsonResponse:
-    return _response("not_found", "Resource not found.", 404)
+    return error_response("not_found", "Resource not found.", 404)
 
 
 def parse_json(request) -> dict | None:
@@ -65,11 +69,3 @@ def paginate(queryset, request, per_page=20):
         "total_pages": paginator.num_pages,
     }
     return list(page), meta
-
-
-class Json404Mixin:
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            return super().dispatch(request, *args, **kwargs)
-        except Http404:
-            return not_found()

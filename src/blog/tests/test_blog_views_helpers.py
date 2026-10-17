@@ -4,8 +4,8 @@ from types import SimpleNamespace
 import pytest
 
 from blog.views.helpers import (
-    _response,
     collection,
+    error_response,
     invalid_credentials,
     invalid_request,
     missing_credentials,
@@ -59,11 +59,11 @@ class ResponseHelpersTests:
         }
 
     def test_response_with_fields_includes_fields_keys(self):
-        resp = _response("code", "msg", 400, {"username": "required"})
+        resp = error_response("code", "msg", 400, {"username": "required"})
         assert _error(resp)["fields"] == {"username": "required"}
 
     def test_response_without_fields_omits_fields_keys(self):
-        resp = _response("code", "msg", 400)
+        resp = error_response("code", "msg", 400)
         assert "fields" not in _error(resp)
 
     def test_validation_error_helper_returns_400(self):
