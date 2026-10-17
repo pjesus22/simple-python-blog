@@ -9,7 +9,6 @@ from blog.models import Category
 from blog.serializers import serialize_category
 from blog.views.auth import login_required_json
 from blog.views.helpers import (
-    Json404Mixin,
     collection,
     invalid_request,
     paginate,
@@ -41,7 +40,7 @@ class CategoryListView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class CategoryDetailView(Json404Mixin, View):
+class CategoryDetailView(View):
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
         return resource(serialize_category(category))

@@ -8,7 +8,6 @@ from blog.models import Post
 from blog.serializers import serialize_post
 from blog.views.auth import login_required_json
 from blog.views.helpers import (
-    Json404Mixin,
     collection,
     invalid_request,
     paginate,
@@ -48,7 +47,7 @@ class PostListView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class PostDetailView(Json404Mixin, View):
+class PostDetailView(View):
     def get(self, request, slug):
         post = get_object_or_404(
             Post.objects.select_related("category"),
