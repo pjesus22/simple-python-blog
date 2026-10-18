@@ -41,6 +41,10 @@ def not_found() -> JsonResponse:
     return error_response("not_found", "Resource not found.", 404)
 
 
+def method_not_allowed() -> JsonResponse:
+    return error_response("method_not_allowed", "Method not allowed.", 405)
+
+
 def parse_json(request) -> dict | None:
     if request.content_type != "application/json":
         return None

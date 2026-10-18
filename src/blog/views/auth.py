@@ -3,9 +3,9 @@ from functools import wraps
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, JsonResponse
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from blog.views.base import ApiView
 from blog.views.helpers import (
     invalid_credentials,
     invalid_request,
@@ -16,7 +16,7 @@ from blog.views.helpers import (
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class LoginView(View):
+class LoginView(ApiView):
     def post(self, request):
         data = parse_json(request)
         if data is None:
@@ -32,7 +32,7 @@ class LoginView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class LogoutView(View):
+class LogoutView(ApiView):
     def post(self, request):
         if not request.user.is_authenticated:
             return unauthenticated()

@@ -1,13 +1,13 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
-from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
 from blog.forms import CategoryForm
 from blog.models import Category
 from blog.serializers import serialize_category
 from blog.views.auth import login_required_json
+from blog.views.base import ApiView
 from blog.views.helpers import (
     collection,
     invalid_request,
@@ -19,7 +19,7 @@ from blog.views.helpers import (
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class CategoryListView(View):
+class CategoryListView(ApiView):
     def get(self, request):
         items, meta = paginate(Category.objects.all(), request)
         return collection([serialize_category(c) for c in items], meta)
@@ -40,7 +40,7 @@ class CategoryListView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-class CategoryDetailView(View):
+class CategoryDetailView(ApiView):
     def get(self, request, slug):
         category = get_object_or_404(Category, slug=slug)
         return resource(serialize_category(category))
