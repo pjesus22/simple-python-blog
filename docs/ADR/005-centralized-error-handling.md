@@ -24,7 +24,9 @@ Use Django's native root URLconf error handlers (`handler400`, `handler403`,
 
 Scope is limited to errors Django dispatches to the 400/403/404/500 handlers. It
 does not cover every response with those status codes, errors rejected before
-URLconf dispatch, 405 responses, or CSRF failures.
+URLconf dispatch, or CSRF failures. Django has no URLconf `handler405`, so
+method not allowed responses are handled by the shared `ApiView` base class
+instead (`blog/views/base.py`), which returns the same JSON envelope.
 
 `DEBUG` behavior is exception-specific:
 
