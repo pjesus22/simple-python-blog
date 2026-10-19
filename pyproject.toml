@@ -30,7 +30,7 @@ DJANGO_SETTINGS_MODULE = "config.settings.test"
 python_files = ["tests.py", "test_*.py", "*_tests.py"]
 python_classes = ["Test*", "*Tests", "*TestCase"]
 pythonpath = ["src"]
-testpaths = ["tests", "src"]
+testpaths = ["tests", "src", "e2e"]
 addopts = "-ra --tb=short --strict-markers"
 
 [tool.coverage.run]
@@ -54,6 +54,7 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP", "DJ", "SIM", "S"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101"]
+"**/e2e/**" = ["S101"]
 "src/config/settings/*" = ["F403", "F405"]
 
 [tool.basedpyright]
