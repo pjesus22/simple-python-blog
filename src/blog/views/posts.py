@@ -10,11 +10,19 @@ from blog.views.base import ApiView
 from blog.views.helpers import (
     collection,
     invalid_request,
+    invalid_transition,
     paginate,
     parse_json,
     resource,
     validation_error,
 )
+
+
+def lifecycle_response(post, source, target):
+    if post.status not in source:
+        return invalid_transition()
+    post.transition_to(target)
+    return resource(serialize_post(post))
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -86,3 +94,35 @@ class PostDetailView(ApiView):
             setattr(post, field, value)
         post.save()
         return resource(serialize_post(post))
+
+    @login_required_json
+    def delete(self, request, slug):
+        post = get_object_or_404(Post.objects, slug=slug)
+        return lifecycle_response(
+            post, (Post.Status.DRAFT, Post.Status.PUBLISHED), Post.Status.DELETED
+        )
+
+
+class PostLifecycleView(ApiView):
+    source: tuple[str, ...]
+    target: str
+
+    @login_required_json
+    def post(self, request, slug):
+        post = get_object_or_404(Post.objects, slug=slug)
+        return lifecycle_response(post, self.source, self.target)
+
+
+class PostPublishView(PostLifecycleView):
+    source = (Post.Status.DRAFT,)
+    target = Post.Status.PUBLISHED
+
+
+class PostUnpublishView(PostLifecycleView):
+    source = (Post.Status.PUBLISHED,)
+    target = Post.Status.DRAFT
+
+
+class PostRestoreView(PostLifecycleView):
+    source = (Post.Status.DELETED,)
+    target = Post.Status.DRAFT

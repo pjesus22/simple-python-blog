@@ -168,9 +168,9 @@ def test_oversized_request_returns_json_400(client):
 
 @override_settings(DEBUG=False)
 def test_api_method_not_allowed_returns_json_405(client):
-    resp = client.delete("/api/v1/posts/anything")
+    resp = client.put("/api/v1/categories/anything", data={"name": "Updated"})
     assert resp.status_code == 405
     assert resp["Content-Type"] == "application/json"
     assert resp.json()["error"]["code"] == "method_not_allowed"
-    assert "DELETE" not in resp["Allow"]
+    assert "PUT" not in resp["Allow"]
     assert "GET" in resp["Allow"]

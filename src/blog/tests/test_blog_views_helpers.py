@@ -8,6 +8,7 @@ from blog.views.helpers import (
     error_response,
     invalid_credentials,
     invalid_request,
+    invalid_transition,
     missing_credentials,
     not_found,
     parse_json,
@@ -79,6 +80,14 @@ class ResponseHelpersTests:
         resp = not_found()
         assert resp.status_code == 404
         assert _error(resp) == {"code": "not_found", "message": "Resource not found."}
+
+    def test_invalid_transition_helper_returns_409(self):
+        resp = invalid_transition()
+        assert resp.status_code == 409
+        assert _error(resp) == {
+            "code": "invalid_transition",
+            "message": "The requested transition is not allowed.",
+        }
 
     def test_resource_default_status_returns_200(self):
         resp = resource({"id": 1})

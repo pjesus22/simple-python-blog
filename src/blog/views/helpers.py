@@ -41,6 +41,12 @@ def not_found() -> JsonResponse:
     return error_response("not_found", "Resource not found.", 404)
 
 
+def invalid_transition() -> JsonResponse:
+    return error_response(
+        "invalid_transition", "The requested transition is not allowed.", 409
+    )
+
+
 def method_not_allowed() -> JsonResponse:
     return error_response("method_not_allowed", "Method not allowed.", 405)
 
