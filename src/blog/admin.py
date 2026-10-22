@@ -11,16 +11,39 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ("title", "status", "category", "published_at", "created_at")
+    list_display = (
+        "title",
+        "status",
+        "category",
+        "published_at",
+        "deleted_at",
+        "created_at",
+    )
     list_filter = ("status", "category")
     search_fields = ("title", "content")
     date_hierarchy = "created_at"
     prepopulated_fields = {"slug": ("title",)}
-    readonly_fields = ("slug", "status", "published_at", "created_at", "updated_at")
+    readonly_fields = (
+        "slug",
+        "status",
+        "published_at",
+        "deleted_at",
+        "created_at",
+        "updated_at",
+    )
     fieldsets = [
         ("Content", {"fields": ["title", "summary", "content", "category"]}),
         (
             "Metadata",
-            {"fields": ["slug", "status", "published_at", "created_at", "updated_at"]},
+            {
+                "fields": [
+                    "slug",
+                    "status",
+                    "published_at",
+                    "deleted_at",
+                    "created_at",
+                    "updated_at",
+                ]
+            },
         ),
     ]

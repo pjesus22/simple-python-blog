@@ -1,7 +1,7 @@
 import pytest
 from django.db import IntegrityError
 
-from blog.models import Category, Post
+from blog.models import Category, InvalidTransition, Post
 
 
 class CategoryModelsTests:
@@ -36,3 +36,59 @@ class PostModelsTests:
 
     def test_init_post_default_status_is_draft(self):
         assert Post().status == "draft"
+
+
+class PostLifecycleTests:
+    def test_deleted_at_defaults_to_none(self, db):
+        post = Post.objects.create(title="No Deletion")
+        assert post.deleted_at is None
+
+    def test_publish_draft_sets_status_and_published_at(self, draft):
+        draft.transition_to(Post.Status.PUBLISHED)
+        draft.refresh_from_db()
+        assert draft.status == Post.Status.PUBLISHED
+        assert draft.published_at is not None
+
+    def test_unpublish_published_sets_draft_and_retains_published_at(self, published):
+        original = published.published_at
+        published.transition_to(Post.Status.DRAFT)
+        published.refresh_from_db()
+        assert published.status == Post.Status.DRAFT
+        assert published.published_at == original
+
+    def test_republish_retains_first_published_at(self, published):
+        original = published.published_at
+        published.transition_to(Post.Status.DRAFT)
+        published.transition_to(Post.Status.PUBLISHED)
+        published.refresh_from_db()
+        assert published.published_at == original
+
+    def test_soft_delete_draft_sets_deleted_at(self, draft):
+        draft.transition_to(Post.Status.DELETED)
+        draft.refresh_from_db()
+        assert draft.status == Post.Status.DELETED
+        assert draft.deleted_at is not None
+
+    def test_soft_delete_published_sets_deleted_at(self, published):
+        published.transition_to(Post.Status.DELETED)
+        published.refresh_from_db()
+        assert published.status == Post.Status.DELETED
+        assert published.deleted_at is not None
+
+    def test_restore_deleted_sets_draft_and_clears_deleted_at(self, deleted):
+        deleted.transition_to(Post.Status.DRAFT)
+        deleted.refresh_from_db()
+        assert deleted.status == Post.Status.DRAFT
+        assert deleted.deleted_at is None
+
+    def test_publish_deleted_is_rejected(self, deleted):
+        original = deleted.deleted_at
+        with pytest.raises(InvalidTransition):
+            deleted.transition_to(Post.Status.PUBLISHED)
+        deleted.refresh_from_db()
+        assert deleted.status == Post.Status.DELETED
+        assert deleted.deleted_at == original
+
+    def test_repeat_transition_is_rejected(self, published):
+        with pytest.raises(InvalidTransition):
+            published.transition_to(Post.Status.PUBLISHED)

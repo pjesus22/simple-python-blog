@@ -47,8 +47,7 @@ def post_factory(db, category_factory):
             category=category_factory(),
         )
         if status != Post.Status.DRAFT:
-            post.status = status
-            post.save()
+            post.transition_to(status)
         return post
 
     return _make

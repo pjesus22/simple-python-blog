@@ -213,6 +213,7 @@ class PostUpdateViewTests:
                 "slug": "hacked-slug",
                 "status": "deleted",
                 "published_at": "2020-01-01T00:00:00Z",
+                "deleted_at": "2020-01-01T00:00:00Z",
             },
             content_type="application/json",
         )
@@ -221,6 +222,7 @@ class PostUpdateViewTests:
         assert resp.status_code == 200
         assert body["slug"] == published.slug
         assert body["status"] == "published"
+        assert body["deleted_at"] is None
 
     def test_update_non_json_content_type_returns_400(
         self, client, user_factory, published

@@ -1,4 +1,4 @@
 from .categories import Category
-from .posts import Post
+from .posts import InvalidTransition, Post
 
-__all__ = ["Post", "Category"]
+__all__ = ["Post", "Category", "InvalidTransition"]

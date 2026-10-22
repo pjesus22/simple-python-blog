@@ -8,6 +8,7 @@ def serialize_post(post) -> dict:
         "category": post.category.slug if post.category else None,
         "status": post.status,
         "published_at": post.published_at.isoformat() if post.published_at else None,
+        "deleted_at": post.deleted_at.isoformat() if post.deleted_at else None,
         "created_at": post.created_at.isoformat(),
         "updated_at": post.updated_at.isoformat(),
     }
