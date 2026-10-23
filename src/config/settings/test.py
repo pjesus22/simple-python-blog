@@ -5,6 +5,7 @@ from .base import *
 # CORE SETTINGS
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-test-only")
 DEBUG = False
+POST_RETENTION_DAYS = 30
 
 # SECURITY OPTIMIZATIONS (FOR SPEED)
 AUTH_PASSWORD_VALIDATORS = []
