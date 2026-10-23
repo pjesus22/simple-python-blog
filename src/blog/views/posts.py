@@ -53,12 +53,7 @@ class PostListView(ApiView):
         form = PostForm(data)
         if not form.is_valid():
             return validation_error(form.errors)
-        post = Post.objects.create(
-            title=form.cleaned_data["title"],
-            summary=form.cleaned_data["summary"],
-            content=form.cleaned_data["content"],
-            category=form.cleaned_data["category"],
-        )
+        post = Post.objects.create(**form.cleaned_data)
         return resource(serialize_post(post), status=201)
 
 

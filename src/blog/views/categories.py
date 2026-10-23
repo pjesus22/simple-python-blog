@@ -32,10 +32,7 @@ class CategoryListView(ApiView):
         form = CategoryForm(data)
         if not form.is_valid():
             return validation_error(form.errors)
-        category = Category.objects.create(
-            name=form.cleaned_data["name"],
-            description=form.cleaned_data["description"],
-        )
+        category = Category.objects.create(**form.cleaned_data)
         return resource(serialize_category(category), status=201)
 
 
