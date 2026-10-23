@@ -51,6 +51,12 @@ def method_not_allowed() -> JsonResponse:
     return error_response("method_not_allowed", "Method not allowed.", 405)
 
 
+def forbidden() -> JsonResponse:
+    return error_response(
+        "forbidden", "You do not have permission to perform this action.", 403
+    )
+
+
 def parse_json(request) -> dict | None:
     if request.content_type != "application/json":
         return None

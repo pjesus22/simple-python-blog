@@ -44,6 +44,39 @@ class PostListViewTests:
         }
         assert len(body["items"]) == 20
 
+    def test_list_authenticated_returns_drafts(self, client, user_factory, draft):
+        client.force_login(user_factory())
+        slugs = [
+            item["slug"] for item in client.get(reverse("post-list")).json()["items"]
+        ]
+        assert draft.slug in slugs
+
+    def test_list_anonymous_non_published_status_returns_403(self, client, draft):
+        resp = client.get(reverse("post-list"), {"status": "draft"})
+        assert resp.status_code == 403
+        assert resp.json()["error"]["code"] == "forbidden"
+
+    def test_list_invalid_status_returns_400(self, client, db):
+        resp = client.get(reverse("post-list"), {"status": "bogus"})
+        assert resp.status_code == 400
+
+    def test_list_authenticated_status_filter_returns_matching_posts(
+        self, client, user_factory, draft, published
+    ):
+        client.force_login(user_factory())
+        resp = client.get(reverse("post-list"), {"status": "draft"})
+        assert [item["slug"] for item in resp.json()["items"]] == [draft.slug]
+
+    def test_list_authenticated_status_filter_paginates(
+        self, client, user_factory, post_factory
+    ):
+        for _ in range(21):
+            post_factory(status=Post.Status.DRAFT)
+        client.force_login(user_factory())
+        body = client.get(reverse("post-list"), {"status": "draft"}).json()
+        assert body["pagination"]["total"] == 21
+        assert len(body["items"]) == 20
+
 
 class PostRetrieveViewTests:
     def test_retrieve_published_post_returns_200(self, client, published):
@@ -67,6 +100,36 @@ class PostRetrieveViewTests:
 
     def test_retrieve_deleted_post_returns_404(self, client, deleted):
         resp = client.get(reverse("post-detail", kwargs={"slug": deleted.slug}))
+        assert resp.status_code == 404
+        assert resp.json()["error"]["code"] == "not_found"
+
+    def test_retrieve_draft_post_authenticated_returns_200(
+        self, client, user_factory, draft
+    ):
+        client.force_login(user_factory())
+        resp = client.get(reverse("post-detail", kwargs={"slug": draft.slug}))
+        body = resp.json()
+
+        assert resp.status_code == 200
+        assert body["slug"] == draft.slug
+        assert body["status"] == Post.Status.DRAFT
+
+    def test_retrieve_deleted_post_authenticated_returns_200(
+        self, client, user_factory, deleted
+    ):
+        client.force_login(user_factory())
+        resp = client.get(reverse("post-detail", kwargs={"slug": deleted.slug}))
+        body = resp.json()
+
+        assert resp.status_code == 200
+        assert body["slug"] == deleted.slug
+        assert body["status"] == Post.Status.DELETED
+
+    def test_retrieve_unknown_slug_authenticated_returns_404(
+        self, client, user_factory
+    ):
+        client.force_login(user_factory())
+        resp = client.get(reverse("post-detail", kwargs={"slug": "nope"}))
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "not_found"
 

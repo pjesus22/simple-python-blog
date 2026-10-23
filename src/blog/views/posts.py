@@ -9,6 +9,7 @@ from blog.views.auth import login_required_json
 from blog.views.base import ApiView
 from blog.views.helpers import (
     collection,
+    forbidden,
     invalid_request,
     invalid_transition,
     paginate,
@@ -28,9 +29,16 @@ def lifecycle_response(post, source, target):
 @method_decorator(csrf_exempt, name="dispatch")
 class PostListView(ApiView):
     def get(self, request):
-        qs = Post.objects.filter(status=Post.Status.PUBLISHED).select_related(
-            "category"
-        )
+        qs = Post.objects.select_related("category")
+        status = request.GET.get("status")
+        if status and status not in Post.Status.values:
+            return validation_error({"status": ["Invalid status."]})
+        if not request.user.is_authenticated:
+            if status and status != Post.Status.PUBLISHED:
+                return forbidden()
+            status = Post.Status.PUBLISHED
+        if status:
+            qs = qs.filter(status=status)
         category = request.GET.get("category")
         if category:
             qs = qs.filter(category__slug=category)
@@ -57,11 +65,10 @@ class PostListView(ApiView):
 @method_decorator(csrf_exempt, name="dispatch")
 class PostDetailView(ApiView):
     def get(self, request, slug):
-        post = get_object_or_404(
-            Post.objects.select_related("category"),
-            slug=slug,
-            status=Post.Status.PUBLISHED,
-        )
+        qs = Post.objects.select_related("category")
+        if not request.user.is_authenticated:
+            qs = qs.filter(status=Post.Status.PUBLISHED)
+        post = get_object_or_404(qs, slug=slug)
         return resource(serialize_post(post))
 
     @login_required_json
