@@ -110,6 +110,7 @@ class PostDetailView(ApiView):
         )
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class PostLifecycleView(ApiView):
     source: tuple[str, ...]
     target: str
