@@ -26,6 +26,18 @@ class CategoryListViewTests:
         }
         assert len(body["items"]) == 20
 
+    def test_list_page_beyond_last_returns_last_page(self, client, category_factory):
+        for _ in range(21):
+            category_factory()
+        body = client.get(reverse("category-list"), {"page": 99}).json()
+        assert body["pagination"] == {
+            "page": 2,
+            "page_size": 20,
+            "total": 21,
+            "total_pages": 2,
+        }
+        assert len(body["items"]) == 1
+
 
 class CategoryRetrieveViewTests:
     def test_retrieve_existing_category_returns_200(self, client, category_factory):

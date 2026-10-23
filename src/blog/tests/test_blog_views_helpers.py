@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
+from django.test import override_settings
 
 from blog.views.helpers import (
     collection,
@@ -11,6 +12,7 @@ from blog.views.helpers import (
     invalid_transition,
     missing_credentials,
     not_found,
+    paginate,
     parse_json,
     resource,
     unauthenticated,
@@ -131,3 +133,45 @@ class ParseJsonTests:
     @pytest.mark.parametrize("body", [b"[]", b"5", b"null", b'"x"'])
     def test_parse_json_non_object_body_returns_none(self, body):
         assert parse_json(_req("application/json", body)) is None
+
+
+class PaginationTests:
+    @staticmethod
+    def _request(page):
+        return SimpleNamespace(GET={} if page is None else {"page": page})
+
+    def test_missing_page_returns_first_page(self):
+        items, meta = paginate(list(range(21)), self._request(None))
+        assert meta == {
+            "page": 1,
+            "page_size": 20,
+            "total": 21,
+            "total_pages": 2,
+        }
+        assert len(items) == 20
+
+    def test_non_numeric_page_returns_first_page(self):
+        _, meta = paginate(list(range(21)), self._request("nope"))
+        assert meta["page"] == 1
+
+    @pytest.mark.parametrize("page", ["0", "-1", "99"])
+    def test_out_of_range_page_returns_last_page(self, page):
+        items, meta = paginate(list(range(21)), self._request(page))
+        assert meta["page"] == 2
+        assert meta["total_pages"] == 2
+        assert items == [20]
+
+    def test_empty_collection_returns_page_one(self):
+        items, meta = paginate([], self._request("99"))
+        assert meta == {
+            "page": 1,
+            "page_size": 20,
+            "total": 0,
+            "total_pages": 1,
+        }
+        assert items == []
+
+    @override_settings(API_PAGE_SIZE=0)
+    def test_non_positive_page_size_raises(self):
+        with pytest.raises(ValueError, match="Page size must be at least 1"):
+            paginate([], self._request(None))

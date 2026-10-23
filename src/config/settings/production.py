@@ -10,6 +10,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 DEBUG = False
 ALLOWED_HOSTS = os.environ["ALLOWED_HOSTS"].split(",")
 POST_RETENTION_DAYS = int(os.getenv("POST_RETENTION_DAYS", "30"))
+API_PAGE_SIZE = int(os.getenv("API_PAGE_SIZE", "20"))
 
 # DATABASE CONFIGURATION
 DATABASES["default"]["NAME"] = Path(

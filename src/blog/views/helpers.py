@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
@@ -75,7 +76,11 @@ def collection(items: list, pagination: dict) -> JsonResponse:
     return JsonResponse({"items": items, "pagination": pagination}, status=200)
 
 
-def paginate(queryset, request, per_page=20):
+def paginate(queryset, request, per_page=None):
+    if per_page is None:
+        per_page = settings.API_PAGE_SIZE
+    if per_page < 1:
+        raise ValueError("Page size must be at least 1.")
     paginator = Paginator(queryset, per_page)
     page = paginator.get_page(request.GET.get("page"))
     meta = {

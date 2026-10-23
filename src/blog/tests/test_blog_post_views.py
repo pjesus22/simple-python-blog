@@ -77,6 +77,31 @@ class PostListViewTests:
         assert body["pagination"]["total"] == 21
         assert len(body["items"]) == 20
 
+    def test_list_unknown_category_returns_empty_collection(self, client, db):
+        resp = client.get(reverse("post-list"), {"category": "missing"})
+        assert resp.status_code == 200
+        assert resp.json() == {
+            "items": [],
+            "pagination": {
+                "page": 1,
+                "page_size": 20,
+                "total": 0,
+                "total_pages": 1,
+            },
+        }
+
+    def test_list_page_beyond_last_returns_last_page(self, client, post_factory):
+        for _ in range(21):
+            post_factory(status=Post.Status.PUBLISHED)
+        body = client.get(reverse("post-list"), {"page": 99}).json()
+        assert body["pagination"] == {
+            "page": 2,
+            "page_size": 20,
+            "total": 21,
+            "total_pages": 2,
+        }
+        assert len(body["items"]) == 1
+
 
 class PostRetrieveViewTests:
     def test_retrieve_published_post_returns_200(self, client, published):
