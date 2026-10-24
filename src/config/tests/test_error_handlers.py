@@ -5,6 +5,7 @@ import pytest
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.http import Http404
 from django.test import Client, override_settings
+from django.urls import reverse
 
 from config import errors, urls
 
@@ -166,11 +167,68 @@ def test_oversized_request_returns_json_400(client):
     }
 
 
+@pytest.mark.parametrize(
+    "method, url_name, url_kwargs, allowed, blocked",
+    [
+        pytest.param(
+            "post",
+            "post-detail",
+            {"slug": "anything"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+            {"POST"},
+            id="post-detail",
+        ),
+        pytest.param(
+            "get",
+            "post-publish",
+            {"slug": "anything"},
+            {"POST", "OPTIONS"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
+            id="post-publish",
+        ),
+        pytest.param(
+            "put",
+            "post-list",
+            {},
+            {"GET", "POST", "HEAD", "OPTIONS"},
+            {"PUT", "PATCH", "DELETE"},
+            id="post-list",
+        ),
+        pytest.param(
+            "get",
+            "login",
+            {},
+            {"POST", "OPTIONS"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
+            id="login",
+        ),
+        pytest.param(
+            "put",
+            "category-list",
+            {},
+            {"GET", "POST", "HEAD", "OPTIONS"},
+            {"PUT", "PATCH", "DELETE"},
+            id="category-list",
+        ),
+        pytest.param(
+            "post",
+            "category-detail",
+            {"slug": "anything"},
+            {"GET", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+            {"POST", "PUT"},
+            id="category-detail",
+        ),
+    ],
+)
 @override_settings(DEBUG=False)
-def test_api_method_not_allowed_returns_json_405(client):
-    resp = client.put("/api/v1/categories/anything", data={"name": "Updated"})
+def test_api_method_not_allowed_returns_json_405(
+    client, method, url_name, url_kwargs, allowed, blocked
+):
+    resp = getattr(client, method)(reverse(url_name, kwargs=url_kwargs))
     assert resp.status_code == 405
     assert resp["Content-Type"] == "application/json"
     assert resp.json()["error"]["code"] == "method_not_allowed"
-    assert "PUT" not in resp["Allow"]
-    assert "GET" in resp["Allow"]
+
+    allowed_methods = {item.strip() for item in resp["Allow"].split(",")}
+    assert allowed <= allowed_methods
+    assert blocked.isdisjoint(allowed_methods)
