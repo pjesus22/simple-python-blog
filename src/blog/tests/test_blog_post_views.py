@@ -44,12 +44,14 @@ class PostListViewTests:
         }
         assert len(body["items"]) == 20
 
-    def test_list_authenticated_returns_drafts(self, client, user_factory, draft):
+    def test_list_authenticated_returns_all_statuses(
+        self, client, user_factory, draft, published, deleted
+    ):
         client.force_login(user_factory())
         slugs = [
             item["slug"] for item in client.get(reverse("post-list")).json()["items"]
         ]
-        assert draft.slug in slugs
+        assert {draft.slug, published.slug, deleted.slug} <= set(slugs)
 
     def test_list_anonymous_non_published_status_returns_403(self, client, draft):
         resp = client.get(reverse("post-list"), {"status": "draft"})
@@ -76,6 +78,13 @@ class PostListViewTests:
         body = client.get(reverse("post-list"), {"status": "draft"}).json()
         assert body["pagination"]["total"] == 21
         assert len(body["items"]) == 20
+
+    def test_list_authenticated_status_filter_returns_deleted(
+        self, client, user_factory, deleted
+    ):
+        client.force_login(user_factory())
+        resp = client.get(reverse("post-list"), {"status": "deleted"})
+        assert [item["slug"] for item in resp.json()["items"]] == [deleted.slug]
 
     def test_list_unknown_category_returns_empty_collection(self, client, db):
         resp = client.get(reverse("post-list"), {"category": "missing"})
@@ -128,6 +137,17 @@ class PostRetrieveViewTests:
         assert resp.status_code == 404
         assert resp.json()["error"]["code"] == "not_found"
 
+    def test_hidden_and_unknown_posts_return_identical_404(
+        self, client, draft, deleted
+    ):
+        unknown = client.get(reverse("post-detail", kwargs={"slug": "missing"}))
+        for post in (draft, deleted):
+            response = client.get(reverse("post-detail", kwargs={"slug": post.slug}))
+            assert (response.status_code, response.json()) == (
+                unknown.status_code,
+                unknown.json(),
+            )
+
     def test_retrieve_draft_post_authenticated_returns_200(
         self, client, user_factory, draft
     ):
@@ -169,6 +189,13 @@ class PostCreateViewTests:
     def test_create_unauthenticated_returns_401(self, client):
         resp = client.post(
             reverse("post-list"), data=self.MOCK_DATA, content_type="application/json"
+        )
+        assert resp.status_code == 401
+        assert resp.json()["error"]["code"] == "unauthenticated"
+
+    def test_create_unauthenticated_invalid_json_returns_401(self, client):
+        resp = client.post(
+            reverse("post-list"), data="{nope", content_type="application/json"
         )
         assert resp.status_code == 401
         assert resp.json()["error"]["code"] == "unauthenticated"
