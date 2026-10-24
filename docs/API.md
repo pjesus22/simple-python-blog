@@ -4,6 +4,9 @@
 - Authentication: Django session cookie. `POST /auth/login` sets it;
   `POST /auth/logout` clears it.
 - Write and lifecycle operations require a session.
+- Only administrator accounts are provisioned; any authenticated user may write.
+
+The CSRF exemption and its rationale are recorded in `ADR-007`
 
 ## Response Format
 
