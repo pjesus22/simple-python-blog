@@ -246,6 +246,35 @@ class PostCreateViewTests:
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"
 
+    @pytest.mark.parametrize("payload", ["{nope", "[]"])
+    def test_create_invalid_json_returns_400(self, client, user_factory, payload):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"), data=payload, content_type="application/json"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
+    def test_create_ignores_immutable_fields(self, client, user_factory):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("post-list"),
+            data={
+                **self.MOCK_DATA,
+                "slug": "hacked",
+                "status": "published",
+                "published_at": "2020-01-01T00:00:00Z",
+                "deleted_at": "2020-01-01T00:00:00Z",
+            },
+            content_type="application/json",
+        )
+        body = resp.json()
+        assert resp.status_code == 201
+        assert body["slug"] == "new-post"
+        assert body["status"] == "draft"
+        assert body["published_at"] is None
+        assert body["deleted_at"] is None
+
 
 class PostUpdateViewTests:
     def test_update_unauthenticated_returns_401(self, client, published):
@@ -320,6 +349,20 @@ class PostUpdateViewTests:
             reverse("post-detail", kwargs={"slug": published.slug}),
             data="title=Updated",
             content_type="text/plain",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
+    @pytest.mark.parametrize("method", ["put", "patch"])
+    @pytest.mark.parametrize("payload", ["{nope", "[]"])
+    def test_update_invalid_json_returns_400(
+        self, client, user_factory, published, method, payload
+    ):
+        client.force_login(user_factory())
+        resp = getattr(client, method)(
+            reverse("post-detail", kwargs={"slug": published.slug}),
+            data=payload,
+            content_type="application/json",
         )
         assert resp.status_code == 400
         assert resp.json()["error"]["code"] == "invalid_request"

@@ -121,6 +121,15 @@ class CategoryCreateViewTests:
         assert resp.json()["error"]["code"] == "unauthenticated"
         assert not Category.objects.exists()
 
+    @pytest.mark.parametrize("payload", ["{nope", "[]"])
+    def test_create_invalid_json_returns_400(self, client, user_factory, payload):
+        client.force_login(user_factory())
+        resp = client.post(
+            reverse("category-list"), data=payload, content_type="application/json"
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
+
 
 class CategoryUpdateViewTests:
     def test_patch_name_keeps_slug_returns_200(
@@ -226,6 +235,20 @@ class CategoryUpdateViewTests:
         assert resp.status_code == 401
         assert resp.json()["error"]["code"] == "unauthenticated"
         assert category.name == "Test Category 0"
+
+    @pytest.mark.parametrize("payload", ["{nope", "[]"])
+    def test_patch_invalid_json_returns_400(
+        self, client, category_factory, user_factory, payload
+    ):
+        client.force_login(user_factory())
+        category = category_factory()
+        resp = client.patch(
+            reverse("category-detail", kwargs={"slug": category.slug}),
+            data=payload,
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
 
 
 class CategoryDeleteViewTests:

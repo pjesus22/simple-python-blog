@@ -1,3 +1,4 @@
+import pytest
 from django.urls import reverse
 
 
@@ -33,6 +34,16 @@ class LoginViewTests:
         assert resp.status_code == 200
         assert resp.json() == {"id": user.pk, "username": "jhonny"}
         assert client.session["_auth_user_id"] == str(user.pk)
+
+    @pytest.mark.parametrize("payload", ["{nope", ["[]"]])
+    def test_login_invalid_json_returns_400(self, client, payload):
+        resp = client.post(
+            reverse("login"),
+            data=payload,
+            content_type="application/json",
+        )
+        assert resp.status_code == 400
+        assert resp.json()["error"]["code"] == "invalid_request"
 
 
 class LogoutViewTests:
