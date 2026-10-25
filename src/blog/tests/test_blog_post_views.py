@@ -30,6 +30,20 @@ class PostListViewTests:
         resp = client.get(reverse("post-list"), {"category": first.category.slug})
         assert [item["slug"] for item in resp.json()["items"]] == [first.slug]
 
+    def test_list_filter_by_status_and_category_returns_matching_posts(
+        self, client, post_factory
+    ):
+        published = post_factory("Published In Category", Post.Status.PUBLISHED)
+        draft = post_factory("Draft In Category", Post.Status.DRAFT)
+        draft.category = published.category
+        draft.save()
+
+        resp = client.get(
+            reverse("post-list"),
+            {"status": "published", "category": published.category.slug},
+        )
+        assert [item["slug"] for item in resp.json()["items"]] == [published.slug]
+
     def test_list_more_than_page_size_returns_paginated_results(
         self, client, post_factory
     ):
@@ -57,6 +71,13 @@ class PostListViewTests:
         resp = client.get(reverse("post-list"), {"status": "draft"})
         assert resp.status_code == 403
         assert resp.json()["error"]["code"] == "forbidden"
+
+    def test_list_anonymous_published_status_returns_published_posts(
+        self, client, draft, published, deleted
+    ):
+        resp = client.get(reverse("post-list"), {"status": "published"})
+        assert resp.status_code == 200
+        assert [item["slug"] for item in resp.json()["items"]] == [published.slug]
 
     def test_list_invalid_status_returns_400(self, client, db):
         resp = client.get(reverse("post-list"), {"status": "bogus"})
