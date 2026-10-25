@@ -58,6 +58,6 @@ select = ["E4", "E7", "E9", "F", "I", "B", "UP", "DJ", "SIM", "S"]
 "src/config/settings/*" = ["F403", "F405"]
 
 [tool.basedpyright]
-include = ["src", "tests"]
+include = ["src", "e2e"]
 typeCheckingMode = "standard"
 reportMissingTypeStubs = false
