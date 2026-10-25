@@ -71,7 +71,7 @@ class PostDetailView(ApiView):
         data = parse_json(request)
         if data is None:
             return invalid_request()
-        post = get_object_or_404(Post.objects, slug=slug)
+        post = get_object_or_404(Post.objects.select_related("category"), slug=slug)
         form = PostForm(data=data, instance=post)
         if not form.is_valid():
             return validation_error(form.errors)
@@ -85,7 +85,7 @@ class PostDetailView(ApiView):
         data = parse_json(request)
         if data is None:
             return invalid_request()
-        post = get_object_or_404(Post.objects, slug=slug)
+        post = get_object_or_404(Post.objects.select_related("category"), slug=slug)
         form = PostForm(data=data, instance=post)
         for name in list(form.fields):
             if name not in data:
@@ -99,7 +99,7 @@ class PostDetailView(ApiView):
 
     @login_required_json
     def delete(self, request, slug):
-        post = get_object_or_404(Post.objects, slug=slug)
+        post = get_object_or_404(Post.objects.select_related("category"), slug=slug)
         return lifecycle_response(
             post, (Post.Status.DRAFT, Post.Status.PUBLISHED), Post.Status.DELETED
         )
@@ -112,7 +112,7 @@ class PostLifecycleView(ApiView):
 
     @login_required_json
     def post(self, request, slug):
-        post = get_object_or_404(Post.objects, slug=slug)
+        post = get_object_or_404(Post.objects.select_related("category"), slug=slug)
         return lifecycle_response(post, self.source, self.target)
 
 
