@@ -35,7 +35,7 @@ class LoginViewTests:
         assert resp.json() == {"id": user.pk, "username": "jhonny"}
         assert client.session["_auth_user_id"] == str(user.pk)
 
-    @pytest.mark.parametrize("payload", ["{nope", ["[]"]])
+    @pytest.mark.parametrize("payload", ["{nope", "[]"])
     def test_login_invalid_json_returns_400(self, client, payload):
         resp = client.post(
             reverse("login"),
