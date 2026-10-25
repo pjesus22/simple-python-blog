@@ -111,6 +111,19 @@ class PostListViewTests:
         }
         assert len(body["items"]) == 1
 
+    def test_list_non_integer_page_returns_first_page(self, client, post_factory):
+        for _ in range(21):
+            post_factory(status=Post.Status.PUBLISHED)
+        body = client.get(reverse("post-list"), {"page": "nope"}).json()
+
+        assert body["pagination"] == {
+            "page": 1,
+            "page_size": 20,
+            "total": 21,
+            "total_pages": 2,
+        }
+        assert len(body["items"]) == 20
+
 
 class PostRetrieveViewTests:
     def test_retrieve_published_post_returns_200(self, client, published):

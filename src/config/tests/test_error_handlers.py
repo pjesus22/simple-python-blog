@@ -187,6 +187,22 @@ def test_oversized_request_returns_json_400(client):
             id="post-publish",
         ),
         pytest.param(
+            "get",
+            "post-unpublish",
+            {"slug": "anything"},
+            {"POST", "OPTIONS"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
+            id="post-unpublish",
+        ),
+        pytest.param(
+            "get",
+            "post-restore",
+            {"slug": "anything"},
+            {"POST", "OPTIONS"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
+            id="post-restore",
+        ),
+        pytest.param(
             "put",
             "post-list",
             {},
@@ -201,6 +217,14 @@ def test_oversized_request_returns_json_400(client):
             {"POST", "OPTIONS"},
             {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
             id="login",
+        ),
+        pytest.param(
+            "get",
+            "logout",
+            {},
+            {"POST", "OPTIONS"},
+            {"GET", "PUT", "PATCH", "DELETE", "HEAD"},
+            id="logout",
         ),
         pytest.param(
             "put",
