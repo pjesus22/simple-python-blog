@@ -4,7 +4,7 @@
 
 Accepted
 
-# Context
+## Context
 
 Posts have three lifecycle states:
 
@@ -39,8 +39,7 @@ The publication date will be assigned when a post transitions to "published" for
 the first time.
 
 If a published post is reverted to "draft" and subsequently published again, its
-existing publication date will be retained unless the implementation defines a
-separate republication policy.
+first publication date is retained.
 
 Deleted posts will remain in the database and can be recovered until they are
 permanently removed by the retention mechanism.
@@ -80,7 +79,7 @@ stateDiagram-v2
 - The implementation needs explicit transition validation.
 - Additional tests are required for valid and invalid transitions.
 
-### Alternatives Considered
+## Alternatives Considered
 
 #### Allow every state transition
 

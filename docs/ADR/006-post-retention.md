@@ -40,7 +40,7 @@ public API.
 - Permanent deletion is irreversible and has no audit trail beyond the command
   output.
 
-### Alternatives Considered
+## Alternatives Considered
 
 #### Run the Purge from a Request or Signal
 

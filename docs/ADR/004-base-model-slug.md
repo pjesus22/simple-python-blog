@@ -6,23 +6,48 @@ Accepted
 
 ## Context
 
-Every domain model needs `created_at`/`updated_at` plus a URL slug for audit
-purposes; avoids repeating fields/boilerplate across `Post` and `Category`.
+`Post` and `Category` both need a URL slug, `created_at` / `updated_at`
+timestamps, and a deterministic default ordering. Repeating those fields in both
+models adds boilerplate and makes the slug rules easy to diverge.
 
 ## Decision
 
-Abstract `BaseModel` in `core` holding the three fields; save-time `slugify`
-from `slug_source` attribute; slug unique plus `blank=True` (generation deferred
-to save, only when unset). `core` stays a plain module (no `apps.py`, not in
-`INSTALLED_APPS`).
+Use an abstract `BaseModel` in the `core` module:
+
+- `created_at` is set automatically on creation; `updated_at` on every save.
+- `slug` is a unique `SlugField` with `blank=True`.
+- `Meta.ordering` is `["-created_at", "-id"]`, so equal timestamps still page
+  deterministically.
+- `save()` generates the slug with `slugify` only when `slug_source` is set and
+  the slug is empty. A slug is never regenerated after it has been set.
+- `core` remains a plain module: it has no `apps.py` and is not listed in
+  `INSTALLED_APPS`.
 
 ## Consequences
 
-Less boilerplate, centralized place for slug logic; every collision raise an
-`IntegrityError` (not uniquer); slug immutable after set (regenerated only if
-blank).
+### Positive
+
+- Shared fields and slug behavior live in one place.
+- Lists have a deterministic newest-first order.
+- Slugs stay stable when a post title or category name changes.
+
+### Negative
+
+- A slug collision raises `IntegrityError`; there is no automatic suffix or
+  retry.
+- The generic base model hides the slug source from the database schema, so the
+  generating field must be found in the model class.
 
 ## Alternatives Considered
 
-Explicit slug field per model (rejected - duplication); DRF-style serializer
-slug (N/A, no DRF); unique auto-suffix on collision (rejected for v1)
+### Declare the fields separately in each model
+
+Rejected because it duplicates the timestamp and slug logic.
+
+### Use a serializer-level slug field
+
+Not applicable because the project does not use a third-party REST framework.
+
+### Generate a unique suffix on collision
+
+Rejected for v1. A collision is an error, not a silently renamed resource.

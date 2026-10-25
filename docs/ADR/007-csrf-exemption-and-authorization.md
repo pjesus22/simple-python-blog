@@ -1,3 +1,5 @@
+# ADR-007: CSRF Exemption and Authorization
+
 ## Status
 
 Accepted
@@ -20,13 +22,15 @@ an additional `is_staff` check.
 - Keep `csrf_exempt` on the API views.
 - Treat the CSRF risk as accepted for `v1` because three conditions hold
   together:
-  - Write requests must use `Content-Type: application/json`, enforced by
-    `parse_json` (`NFR-004`). An HTML form cannot send that content type.
+  - Write requests that carry a body must use `Content-Type: application/json`,
+    enforced by `parse_json` (`NFR-004`). An HTML form cannot send that content
+    type. Bodyless state-changing requests rely on the cookie rule below.
   - A cross-origin `fetch` with `application/json` triggers a CORS preflight.
     The project configures no CORS headers, so the browser does not send the
     request.
   - `SESSION_COOKIE_SAMESITE` is not overridden and keeps Django's default of
-    `Lax`, so a cross-site request does not carry the session cookie.
+    `Lax`, so a cross-site request does not carry the session cookie, including
+    for bodyless state changes.
 - Grant write access to any authenticated user. Only administrator accounts
   exist, so a separate `is_staff` check adds no security boundary in `v1`.
 - Keep `/admin/` under Django's normal CSRF protection.
