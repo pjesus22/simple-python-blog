@@ -239,7 +239,7 @@ class CategoryUpdateViewTests:
     def test_patch_unauthenticated_returns_401(self, client, category_factory, db):
         category = category_factory()
         resp = client.patch(
-            reverse("post-detail", kwargs={"slug": category.slug}),
+            reverse("category-detail", kwargs={"slug": category.slug}),
             data={"name": "Hacked"},
             content_type="application/json",
         )
