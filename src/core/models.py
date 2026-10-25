@@ -11,7 +11,7 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ["-created_at"]
+        ordering = ["-created_at", "-id"]
 
     def save(self, *args, **kwargs):
         if self.slug_source and not self.slug:
