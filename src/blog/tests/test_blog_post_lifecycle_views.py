@@ -134,6 +134,17 @@ class PostRestoreViewTests:
         assert body["status"] == Post.Status.DRAFT
         assert body["deleted_at"] is None
 
+    def test_restore_then_publish_returns_published(
+        self, client, user_factory, deleted
+    ):
+        client.force_login(user_factory())
+        restored = client.post(reverse("post-restore", kwargs={"slug": deleted.slug}))
+        assert restored.status_code == 200
+
+        resp = client.post(reverse("post-publish", kwargs={"slug": deleted.slug}))
+        assert resp.status_code == 200
+        assert resp.json()["status"] == Post.Status.PUBLISHED
+
     def test_restore_draft_returns_409(self, client, user_factory, draft):
         client.force_login(user_factory())
         resp = client.post(reverse("post-restore", kwargs={"slug": draft.slug}))
