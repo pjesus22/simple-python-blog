@@ -1,5 +1,7 @@
 # Simple Python Blog
 
+[![CI](https://github.com/pjesus22/simple-python-blog/actions/workflows/ci.yml/badge.svg)](https://github.com/pjesus22/simple-python-blog/actions/workflows/ci.yml)
+
 A small REST API for a personal blog, built with Django and the Python standard
 library only. It is an exploratory project that tests how far Django's core
 HTTP, JSON, authentication, and ORM features can go without a third-party REST
